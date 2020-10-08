@@ -1,0 +1,15 @@
+{
+    "zabov": {  
+        "port":"53", 
+        "proto":"udp", 
+        "ipaddr":"0.0.0.0",
+        "upstream":"./dns-upstream.txt"  ,
+        "cachettl": 1,
+        "killfilettl": 12,
+        "singlefilters":"./urls-domains.txt" ,
+        "doublefilters":"./urls-hosts.txt", 
+        "blackholeip":"127.0.0.1",
+        "hostsfile":"./urls-local.txt"
+    }
+
+}

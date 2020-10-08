@@ -1,0 +1,10 @@
+zabov
+killfile
+killfile/*
+db/zabov.db
+binaries
+binaries/*
+build.sh
+.vscode
+.vscode/*
+

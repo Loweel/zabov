@@ -1,0 +1,18 @@
+FROM golang:1.14.1 AS builder
+RUN apt install git -y
+RUN mkdir -p /go/src/zabov
+RUN git clone https://git.keinpfusch.net/loweel/zabov /go/src/zabov 
+WORKDIR /go/src/zabov
+ENV GO111MODULE=auto 
+RUN go get ; go build -mod=vendor 
+
+FROM debian:latest 
+RUN apt update
+RUN apt upgrade -y
+RUN apt install ca-certificates -y
+RUN mkdir -p /opt/zabov
+WORKDIR  /opt/zabov
+COPY --from=builder /go/src/zabov /opt/zabov 
+EXPOSE 53/udp
+ENTRYPOINT ["/opt/zabov/zabov"]
+
