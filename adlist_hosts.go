@@ -16,9 +16,9 @@ func init() {
 }
 
 //DoubleIndexFilter puts the domains inside file
-func DoubleIndexFilter(durl string) error {
+func DoubleIndexFilter(durl string, configs stringarray) error {
 
-	fmt.Println("Retrieving HostFile from: ", durl)
+	fmt.Println("DoubleIndexFilter: Retrieving HostFile from: ", durl)
 
 	var err error
 
@@ -59,7 +59,8 @@ func DoubleIndexFilter(durl string) error {
 		}
 
 		if net.ParseIP(h[0]) != nil {
-			DomainKill(h[1], durl)
+
+			DomainKill(h[1], durl, configs)
 
 			// fmt.Println("MATCH: ", h[1])
 			numLines++
@@ -76,20 +77,38 @@ func DoubleIndexFilter(durl string) error {
 
 }
 
-func getDoubleFilters() {
+func getDoubleFilters(urls urlsMap) {
 
-	s := fileByLines(ZabovDoubleBL)
-
-	for _, a := range s {
-		DoubleIndexFilter(a)
+	fmt.Println("getDoubleFilters: downloading all urls:", len(urls))
+	for url, configs := range urls {
+		DoubleIndexFilter(url, configs)
 	}
 
 }
 
 func downloadDoubleThread() {
 	fmt.Println("Starting updater of DOUBLE lists, each (hours):", ZabovKillTTL)
+
+	_urls := urlsMap{}
+
 	for {
-		getDoubleFilters()
+		fmt.Println("downloadDoubleThread: collecting urls from all configs...")
+		for config := range ZabovConfigs {
+			ZabovDoubleBL := ZabovConfigs[config].ZabovDoubleBL
+
+			s := fileByLines(ZabovDoubleBL)
+			for _, v := range s {
+				configs := _urls[v]
+				if configs == nil {
+					configs = stringarray{}
+					_urls[v] = configs
+				}
+				configs = append(configs, config)
+				_urls[v] = configs
+			}
+		}
+
+		getDoubleFilters(_urls)
 		time.Sleep(time.Duration(ZabovKillTTL) * time.Hour)
 	}
 

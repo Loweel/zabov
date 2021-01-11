@@ -14,7 +14,7 @@ func init() {
 }
 
 //SingleIndexFilter puts the domains inside file
-func SingleIndexFilter(durl string) error {
+func SingleIndexFilter(durl string, configs stringarray) error {
 
 	fmt.Println("Retrieving DomainFile from: ", durl)
 
@@ -57,7 +57,9 @@ func SingleIndexFilter(durl string) error {
 		}
 
 		if !strings.Contains(h[0], "#") {
-			DomainKill(h[0], durl)
+
+			DomainKill(h[0], durl, configs)
+
 			// fmt.Println("MATCH: ", h[1])
 			numLines++
 		} else {
@@ -73,20 +75,37 @@ func SingleIndexFilter(durl string) error {
 
 }
 
-func getSingleFilters() {
+func getSingleFilters(urls urlsMap) {
 
-	s := fileByLines(ZabovSingleBL)
-
-	for _, a := range s {
-		SingleIndexFilter(a)
+	fmt.Println("getSingleFilters: downloading all urls:", len(urls))
+	for url, configs := range urls {
+		SingleIndexFilter(url, configs)
 	}
 
 }
 
 func downloadThread() {
 	fmt.Println("Starting updater of SINGLE lists, each (hours): ", ZabovKillTTL)
+	_urls := urlsMap{}
+
 	for {
-		getSingleFilters()
+		fmt.Println("downloadThread: collecting urls from all configs...")
+		for config := range ZabovConfigs {
+			ZabovSingleBL := ZabovConfigs[config].ZabovSingleBL
+
+			s := fileByLines(ZabovSingleBL)
+			for _, v := range s {
+				configs := _urls[v]
+				if configs == nil {
+					configs = stringarray{}
+					_urls[v] = configs
+				}
+				configs = append(configs, config)
+				_urls[v] = configs
+			}
+		}
+
+		getSingleFilters(_urls)
 		time.Sleep(time.Duration(ZabovKillTTL) * time.Hour)
 	}
 

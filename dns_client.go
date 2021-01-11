@@ -12,7 +12,8 @@ import (
 
 //ForwardQuery forwards the query to the upstream server
 //first server to answer wins
-func ForwardQuery(query *dns.Msg) *dns.Msg {
+//accepts config name to select the UP DNS source list
+func ForwardQuery(query *dns.Msg, config string) *dns.Msg {
 
 	go incrementStats("ForwardQueries", 1)
 
@@ -45,7 +46,7 @@ func ForwardQuery(query *dns.Msg) *dns.Msg {
 			continue
 		}
 
-		d := oneTimeDNS()
+		d := oneTimeDNS(config)
 
 		in, _, err := c.Exchange(query, d)
 		if err != nil {
@@ -78,10 +79,11 @@ func init() {
 
 }
 
-func oneTimeDNS() (dns string) {
+func oneTimeDNS(config string) (dns string) {
 
 	rand.Seed(time.Now().Unix())
 
+	ZabovDNSArray := ZabovDNSArrays[config]
 	upl := ZabovDNSArray
 
 	if len(upl) < 1 {

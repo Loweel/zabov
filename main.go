@@ -35,6 +35,53 @@ var ZabovDNSArray []string
 
 type handler struct{}
 
+//ZabovDNSArrays contains the arrays containing all the DNS we mention
+var ZabovDNSArrays map[string][]string
+
+// ZabovConfig contains all Zabov configs
+type ZabovConfig struct {
+	ZabovUpDNS     string // json:upstream -> ZabovDNSArray
+	ZabovSingleBL  string // json:singlefilters
+	ZabovDoubleBL  string // json:doublefilters
+	ZabovAddBL     string // json:blackholeip
+	ZabovHostsFile string // json:hostsfile
+}
+
+// ZabovConfigs contains all Zabov configs
+var ZabovConfigs map[string]ZabovConfig
+
+// ZabovConfigDefault contains only "default" config
+var ZabovConfigDefault ZabovConfig
+
+// ZabovIPGroup contains Zabov groups of IPs
+type ZabovIPGroup struct {
+	ips       []string // IPs in this group
+	cfg       string   // config name to be used if there is no timetable
+	timetable string   // timetable name to be used for this group; timetable SHALL reference to config name to use
+}
+
+// ZabovIPGroups contains an array of all Zabov groups of IP rules
+var ZabovIPGroups []ZabovIPGroup
+
+// ZabovTimetableEntry contains Zabov single time table entry
+type ZabovTimetableEntry struct {
+	times []string
+	days  []string
+}
+
+// ZabovTimetable contains a Zabov time table
+type ZabovTimetable struct {
+	table  []ZabovTimetableEntry
+	cfgin  string // configuration name to be used if "inside" timetable
+	cfgout string // configuration name to be used if "outiside" timetable
+}
+
+// ZabovTimetables contains all Zabov time tables, by name
+var ZabovTimetables map[string]ZabovTimetable
+
+// ZabovIPAliases contains an array of all Zabov IP aliases
+var ZabovIPAliases map[string]string
+
 func main() {
 
 	MyDNS.Handler = &handler{}

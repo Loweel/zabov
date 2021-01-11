@@ -1,15 +1,50 @@
 {
-    "zabov": {  
+    "zabov":{
         "port":"53", 
         "proto":"udp", 
         "ipaddr":"0.0.0.0",
-        "upstream":"./dns-upstream.txt"  ,
         "cachettl": 1,
-        "killfilettl": 12,
-        "singlefilters":"./urls-domains.txt" ,
-        "doublefilters":"./urls-hosts.txt", 
-        "blackholeip":"127.0.0.1",
-        "hostsfile":"./urls-local.txt"
+        "killfilettl": 12
+    },
+    "ipaliases":{
+        "pc8":"192.168.178.29"
+    },
+    "ipgroups":[
+        {
+            "ips":["192.168.178.30/32", "192.168.178.31/32", "pc8"],
+            "cfg":"",
+            "timetable":"tt_children"
+        }
+    ],
+    "timetables":{
+        "tt_children":{
+            "tables":[{"times":"8:30-12:30;18:30-22:30", "days":"Mo;Tu;We;Th;Fr;Sa;Su"}],
+            "cfgin":"children_restricted",
+            "cfgout":"children"
+        }
+    },
+    "configs":{
+        "default":{
+            "upstream":"./dns-upstream.txt",
+            "singlefilters":"./urls-domains.txt",
+            "doublefilters":"./urls-hosts.txt", 
+            "blackholeip":"127.0.0.1",
+            "hostsfile":"./urls-local.txt"
+        },
+        "children":{
+            "upstream":"./dns-upstream.txt",
+            "singlefilters":"./urls-domains.txt",
+            "doublefilters":"./urls-hosts.txt", 
+            "blackholeip":"127.0.0.1",
+            "hostsfile":"./urls-local.txt"
+        },
+        "children_restricted":{
+            "upstream":"./dns-upstream.txt",
+            "singlefilters":"./urls-domains.txt",
+            "doublefilters":"./urls-hosts.txt", 
+            "blackholeip":"127.0.0.1",
+            "hostsfile":"./urls-local.txt"
+        }
     }
 
 }

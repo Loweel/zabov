@@ -7,11 +7,14 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
-//MyZabovKDB is the storage where we'll put domains to block
-var MyZabovKDB *leveldb.DB
+//MyZabovKDB is the storage where we'll put domains to block (obsolete)
+//var MyZabovKDB *leveldb.DB
 
-//MyZabovCDB is the storage where we'll put domains to cache
+//MyZabovCDB is the storage where we'll put domains to cache (global for all configs)
 var MyZabovCDB *leveldb.DB
+
+//MyZabovKDBs is the storage where we'll put domains to block (one for each config)
+var MyZabovKDBs map[string]*leveldb.DB
 
 func init() {
 
@@ -20,13 +23,13 @@ func init() {
 	os.RemoveAll("./db")
 
 	os.MkdirAll("./db", 0755)
-
-	MyZabovKDB, err = leveldb.OpenFile("./db/killfile", nil)
-	if err != nil {
-		fmt.Println("Cannot create Killfile db: ", err.Error())
-	} else {
-		fmt.Println("Killfile DB created")
-	}
+	/*
+		MyZabovKDB, err = leveldb.OpenFile("./db/killfile", nil)
+		if err != nil {
+			fmt.Println("Cannot create Killfile db: ", err.Error())
+		} else {
+			fmt.Println("Killfile DB created")
+		}*/
 
 	MyZabovCDB, err = leveldb.OpenFile("./db/cache", nil)
 	if err != nil {
@@ -34,5 +37,22 @@ func init() {
 	} else {
 		fmt.Println("Cache DB created")
 	}
+
+	MyZabovKDBs = map[string]*leveldb.DB{}
+}
+
+// ZabovCreateKDB creates Kill DBs
+func ZabovCreateKDB(conf string) {
+	var err error
+
+	dbname := "./db/killfile_" + conf
+	KDB, err := leveldb.OpenFile(dbname, nil)
+	if err != nil {
+		fmt.Println("Cannot create Killfile db: ", err.Error())
+	} else {
+		fmt.Println("Killfile DB created")
+	}
+
+	MyZabovKDBs[conf] = KDB
 
 }
