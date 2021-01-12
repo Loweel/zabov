@@ -26,11 +26,18 @@ func bWriteThread() {
 
 	for item := range bChannel {
 
+		alreadyInSomeDB := false
+
 		for _, config := range item.Kconfigs {
+			if !alreadyInSomeDB {
+				alreadyInSomeDB = domainInKillfile(item.Kdomain, config)
+			}
 			writeInKillfile(item.Kdomain, item.Ksource, config)
 		}
-		incrementStats("BL domains from "+item.Ksource, 1)
-		incrementStats("TOTAL", 1)
+		if !alreadyInSomeDB {
+			incrementStats("BL domains from "+item.Ksource, 1)
+			incrementStats("TOTAL", 1)
+		}
 
 	}
 

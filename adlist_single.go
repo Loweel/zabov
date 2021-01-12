@@ -18,6 +18,9 @@ func SingleIndexFilter(durl string, configs stringarray) error {
 
 	fmt.Println("Retrieving DomainFile from: ", durl)
 
+	// resets malformed HostLines for url
+	setstatsvalue("Malformed DomainLines "+durl, 0)
+
 	var err error
 
 	// Get the data
@@ -46,6 +49,9 @@ func SingleIndexFilter(durl string, configs stringarray) error {
 
 		line := scanner.Text()
 
+		if len(line) == 0 || strings.TrimSpace(line)[0] == '#' {
+			continue
+		}
 		h := strings.FieldsFunc(line, splitter)
 
 		if h == nil {
