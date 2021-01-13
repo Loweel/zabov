@@ -16,6 +16,12 @@ var ZabovCacheTTL int
 //ZabovKillTTL is the amount of hours we cache the killfile (global)
 var ZabovKillTTL int
 
+//ZabovLocalResponder is the default DNS server for loca domains
+var ZabovLocalResponder string
+
+//ZabovLocalDomain is the default local domain
+var ZabovLocalDomain string
+
 type handler struct{}
 
 // ZabovConfig contains all Zabov configs

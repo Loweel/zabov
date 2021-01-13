@@ -100,6 +100,10 @@ func downloadThread() {
 		for config := range ZabovConfigs {
 			ZabovSingleBL := ZabovConfigs[config].ZabovSingleBL
 
+			if len(ZabovSingleBL) == 0 {
+				continue
+			}
+
 			s := fileByLines(ZabovSingleBL)
 			for _, v := range s {
 				configs := _urls[v]

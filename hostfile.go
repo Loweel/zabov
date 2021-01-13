@@ -19,6 +19,9 @@ func ingestLocalBlacklists() {
 	_files := urlsMap{}
 	for config := range ZabovConfigs {
 		ZabovHostsFile := ZabovConfigs[config].ZabovHostsFile
+		if len(ZabovHostsFile) == 0 {
+			continue
+		}
 		configs := _files[ZabovHostsFile]
 		if configs == nil {
 			configs = stringarray{}

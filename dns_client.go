@@ -13,7 +13,7 @@ import (
 //ForwardQuery forwards the query to the upstream server
 //first server to answer wins
 //accepts config name to select the UP DNS source list
-func ForwardQuery(query *dns.Msg, config string) *dns.Msg {
+func ForwardQuery(query *dns.Msg, config string, nocache bool) *dns.Msg {
 
 	go incrementStats("ForwardQueries", 1)
 
@@ -24,12 +24,14 @@ func ForwardQuery(query *dns.Msg, config string) *dns.Msg {
 	fqdn := strings.TrimRight(query.Question[0].Name, ".")
 
 	lfqdn := fmt.Sprintf("%d", query.Question[0].Qtype) + "." + fqdn
-	if cached := GetDomainFromCache(lfqdn); cached != nil {
-		go incrementStats("CacheHit", 1)
-		cached.SetReply(query)
-		cached.Authoritative = true
-		return cached
+	if !nocache {
+		if cached := GetDomainFromCache(lfqdn); cached != nil {
+			go incrementStats("CacheHit", 1)
+			cached.SetReply(query)
+			cached.Authoritative = true
+			return cached
 
+		}
 	}
 
 	c := new(dns.Client)

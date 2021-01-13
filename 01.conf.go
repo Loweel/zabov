@@ -46,15 +46,20 @@ func init() {
 	ZabovCacheTTL = int(zabov["cachettl"].(float64))
 	ZabovKillTTL = int(zabov["killfilettl"].(float64))
 
+	if MyConf["configs"] == nil {
+		log.Println("configs not set: you shall set at least 'default' config")
+		os.Exit(1)
+	}
+
 	configs := MyConf["configs"].(map[string]interface{})
 
 	if len(configs) == 0 {
-		log.Println("you shall set at least default config")
+		log.Println("you shall set at least 'default' config")
 		os.Exit(1)
 	}
 
 	if configs["default"] == nil {
-		log.Println("default config is required")
+		log.Println("'default' config is required")
 		os.Exit(1)
 	}
 
@@ -188,6 +193,23 @@ func init() {
 			os.Exit(1)
 		}
 		ZabovIPGroups = append(ZabovIPGroups, groupStruct)
+	}
+
+	localresponder := MyConf["localresponder"].(map[string]interface{})
+
+	if localresponder != nil {
+		if localresponder["responder"] != nil {
+			ZabovLocalResponder = localresponder["responder"].(string)
+			if len(ZabovLocalResponder) > 0 {
+				local := ZabovConfig{}
+				local.ZabovDNSArray = []string{ZabovLocalResponder}
+				ZabovConfigs["__localresponder__"] = local
+				fmt.Println("ZabovLocalResponder:", ZabovLocalResponder)
+			}
+		}
+		if localresponder["localdomain"] != nil {
+			ZabovLocalDomain = localresponder["localdomain"].(string)
+		}
 	}
 	//fmt.Println("ZabovConfigs:", ZabovConfigs)
 	//fmt.Println("ZabovTimetables:", ZabovTimetables)

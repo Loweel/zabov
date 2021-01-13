@@ -102,7 +102,9 @@ func downloadDoubleThread() {
 		fmt.Println("downloadDoubleThread: collecting urls from all configs...")
 		for config := range ZabovConfigs {
 			ZabovDoubleBL := ZabovConfigs[config].ZabovDoubleBL
-
+			if len(ZabovDoubleBL) == 0 {
+				continue
+			}
 			s := fileByLines(ZabovDoubleBL)
 			for _, v := range s {
 				configs := _urls[v]

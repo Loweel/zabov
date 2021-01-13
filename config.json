@@ -6,6 +6,10 @@
         "cachettl": 1,
         "killfilettl": 12
     },
+    "localresponder":{
+        "responder":"192.168.178.1:53",
+        "localdomain":"fritz.box"
+    },
     "ipaliases":{
         "pc8":"192.168.178.29",
         "localhost":"127.0.0.1"

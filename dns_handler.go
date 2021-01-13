@@ -35,14 +35,14 @@ func confFromTimeTable(timetable string) string {
 
 				if (nowHour > t.start.hour || (nowHour == t.start.hour && nowMinute >= t.start.minute)) &&
 					(nowHour < t.stop.hour || (nowHour == t.stop.hour && nowMinute <= t.stop.minute)) {
-					incrementStats("TIMETABLE IN: "+timetable, 1)
+					go incrementStats("TIMETABLE IN: "+timetable, 1)
 					fmt.Println("confFromTimeTable: return IN", tt.cfgin)
 					return tt.cfgin
 				}
 			}
 		}
 	}
-	incrementStats("TIMETABLE OUT: "+timetable, 1)
+	go incrementStats("TIMETABLE OUT: "+timetable, 1)
 	fmt.Println("confFromTimeTable: return OUT", tt.cfgout)
 	return tt.cfgout
 }
@@ -77,7 +77,6 @@ func (mydns *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	msg.SetReply(r)
 
 	config := confFromIP(net.ParseIP(remIP))
-	incrementStats("CONFIG: "+config, 1)
 
 	ZabovConfig := ZabovConfigs[config]
 	switch r.Question[0].Qtype {
@@ -86,6 +85,24 @@ func (mydns *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 		domain := msg.Question[0].Name
 		fqdn := strings.TrimRight(domain, ".")
 
+		if len(ZabovIPAliases[fqdn]) > 0 {
+			config = "__aliases__"
+			msg.Answer = append(msg.Answer, &dns.A{
+				Hdr: dns.RR_Header{Name: domain, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 60},
+				A:   net.ParseIP(ZabovIPAliases[fqdn]),
+			})
+			break
+		}
+		if len(ZabovLocalResponder) > 0 {
+			if !strings.Contains(fqdn, ".") ||
+				(len(ZabovLocalDomain) > 0 && strings.HasSuffix(fqdn, ZabovLocalDomain)) {
+				config = "__localresponder__"
+				ret := ForwardQuery(r, config, true)
+				w.WriteMsg(ret)
+				break
+			}
+
+		}
 		if domainInKillfile(fqdn, config) {
 			go incrementStats("Killed", 1)
 
@@ -94,13 +111,14 @@ func (mydns *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 				A:   net.ParseIP(ZabovConfig.ZabovAddBL),
 			})
 		} else {
-			ret := ForwardQuery(r, config)
+			ret := ForwardQuery(r, config, false)
 			w.WriteMsg(ret)
 		}
 	default:
-		ret := ForwardQuery(r, config)
+		ret := ForwardQuery(r, config, false)
 		w.WriteMsg(ret)
 	}
+	go incrementStats("CONFIG: "+config, 1)
 	w.WriteMsg(&msg)
 
 }
