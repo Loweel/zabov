@@ -87,6 +87,7 @@ func getSingleFilters(urls urlsMap) {
 	for url, configs := range urls {
 		SingleIndexFilter(url, configs)
 	}
+	fmt.Println("getSingleFilters: DONE!")
 
 }
 

@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/miekg/dns"
@@ -46,13 +48,15 @@ func init() {
 
 	configs := MyConf["configs"].(map[string]interface{})
 
-	defaultConf := configs["default"].(map[string]interface{})
+	if len(configs) == 0 {
+		log.Println("you shall set at least default config")
+		os.Exit(1)
+	}
 
-	ZabovUpDNS = defaultConf["upstream"].(string)
-	ZabovSingleBL = defaultConf["singlefilters"].(string)
-	ZabovDoubleBL = defaultConf["doublefilters"].(string)
-	ZabovAddBL = defaultConf["blackholeip"].(string)
-	ZabovHostsFile = defaultConf["hostsfile"].(string)
+	if configs["default"] == nil {
+		log.Println("default config is required")
+		os.Exit(1)
+	}
 
 	zabovString := ZabovAddr + ":" + ZabovPort
 
@@ -60,13 +64,11 @@ func init() {
 	MyDNS.Addr = zabovString
 	MyDNS.Net = ZabovType
 
-	ZabovDNSArray = fileByLines(ZabovUpDNS)
-
 	ZabovConfigs = map[string]ZabovConfig{}
 	ZabovIPGroups = []ZabovIPGroup{}
-	ZabovTimetables = map[string]ZabovTimetable{}
+	ZabovTimetables = map[string]*ZabovTimetable{}
 	ZabovIPAliases = map[string]string{}
-	ZabovDNSArrays = map[string][]string{}
+
 	IPAliasesRaw := MyConf["ipaliases"].(map[string]interface{})
 
 	for alias, ip := range IPAliasesRaw {
@@ -84,11 +86,8 @@ func init() {
 		conf.ZabovAddBL = confRaw["blackholeip"].(string)
 		conf.ZabovHostsFile = confRaw["hostsfile"].(string)
 
-		ZabovDNSArrays[name] = fileByLines(conf.ZabovUpDNS)
+		conf.ZabovDNSArray = fileByLines(conf.ZabovUpDNS)
 		ZabovConfigs[name] = conf
-		if name == "default" {
-			ZabovConfigDefault = conf
-		}
 		ZabovCreateKDB(name)
 	}
 
@@ -111,13 +110,13 @@ func init() {
 
 		_, ok := ZabovConfigs[timetable.cfgin]
 		if !ok {
-			log.Println("inexistent cfgin:", timetable.cfgin)
+			log.Println("timetable: inexistent cfgin:", timetable.cfgin)
 			os.Exit(1)
 		}
 
 		_, ok = ZabovConfigs[timetable.cfgout]
 		if !ok {
-			log.Println("inexistent cfgout:", timetable.cfgout)
+			log.Println("timetable: inexistent cfgout:", timetable.cfgout)
 			os.Exit(1)
 		}
 
@@ -126,11 +125,36 @@ func init() {
 		for i := range tables {
 			table := tables[i].(map[string]interface{})
 			var ttEntry ZabovTimetableEntry
-			ttEntry.times = strings.Split(table["times"].(string), ";")
-			ttEntry.days = strings.Split(table["days"].(string), ";")
-			timetable.table = append(timetable.table, ttEntry)
+			ttEntry.times = []*ZabovTimeRange{}
+			for _, tRaw := range strings.Split(table["times"].(string), ";") {
+				tRawArr := strings.Split(tRaw, "-")
+				if len(tRawArr) > 1 {
+					startArr := strings.Split(tRawArr[0], ":")
+					stopArr := strings.Split(tRawArr[1], ":")
+
+					if len(startArr) > 1 && len(stopArr) > 1 {
+						hourStart, _ := strconv.Atoi(startArr[0])
+						minuteStart, _ := strconv.Atoi(startArr[1])
+						start := ZabovTime{hour: hourStart, minute: minuteStart}
+
+						hourStop, _ := strconv.Atoi(stopArr[0])
+						minuteStop, _ := strconv.Atoi(stopArr[1])
+						stop := ZabovTime{hour: hourStop, minute: minuteStop}
+						t := ZabovTimeRange{start: start, stop: stop}
+						ttEntry.times = append(ttEntry.times, &t)
+					}
+				}
+
+			}
+
+			ttEntry.days = map[string]bool{}
+			for _, day := range strings.Split(table["days"].(string), ";") {
+				ttEntry.days[day] = true
+			}
+
+			timetable.table = append(timetable.table, &ttEntry)
 		}
-		ZabovTimetables[name] = timetable
+		ZabovTimetables[name] = &timetable
 	}
 
 	IPGroups := MyConf["ipgroups"].([]interface{})
@@ -141,15 +165,16 @@ func init() {
 		var groupStruct ZabovIPGroup
 		groupMap := IPGroups[i].(map[string]interface{})
 		IPsRaw := groupMap["ips"].([]interface{})
-		groupStruct.ips = []string{}
+		groupStruct.ips = []net.IP{}
 		for x := range IPsRaw {
-			ip := IPsRaw[x].(string)
-			fmt.Println("adding IP ", ip)
+			ipRaw := IPsRaw[x].(string)
+			ip := net.ParseIP(ipRaw)
+			fmt.Println("adding IP ", ipRaw)
 
-			alias, ok := ZabovIPAliases[ip]
+			alias, ok := ZabovIPAliases[ipRaw]
 			if ok {
-				fmt.Println("IP alias: ", ip, alias)
-				ip = alias
+				fmt.Println("IP alias: ", ipRaw, alias)
+				ip = net.ParseIP(alias)
 			}
 			groupStruct.ips = append(groupStruct.ips, ip)
 		}
@@ -164,9 +189,9 @@ func init() {
 		}
 		ZabovIPGroups = append(ZabovIPGroups, groupStruct)
 	}
-	fmt.Println("ZabovConfigs:", ZabovConfigs)
-	fmt.Println("ZabovTimetables:", ZabovTimetables)
-	fmt.Println("ZabovIPAliases:", ZabovIPAliases)
-	fmt.Println("ZabovIPGroups:", ZabovIPGroups)
+	//fmt.Println("ZabovConfigs:", ZabovConfigs)
+	//fmt.Println("ZabovTimetables:", ZabovTimetables)
+	//fmt.Println("ZabovIPAliases:", ZabovIPAliases)
+	//fmt.Println("ZabovIPGroups:", ZabovIPGroups)
 
 }

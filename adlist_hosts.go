@@ -89,6 +89,7 @@ func getDoubleFilters(urls urlsMap) {
 	for url, configs := range urls {
 		DoubleIndexFilter(url, configs)
 	}
+	fmt.Println("getDoubleFilters: DONE!")
 
 }
 
