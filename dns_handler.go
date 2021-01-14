@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net"
 	"strings"
 	"time"
@@ -21,7 +22,9 @@ func getCurTime() (time.Time, error) {
 func confFromTimeTable(timetable string) string {
 	tt := ZabovTimetables[timetable]
 	if tt == nil {
-		//fmt.Println("confFromTimeTable: return default")
+		if ZabovDebug {
+			log.Println("confFromTimeTable: return default")
+		}
 		return "default"
 	}
 	for _, ttentry := range tt.table {
@@ -35,14 +38,18 @@ func confFromTimeTable(timetable string) string {
 				if (nowHour > t.start.hour || (nowHour == t.start.hour && nowMinute >= t.start.minute)) &&
 					(nowHour < t.stop.hour || (nowHour == t.stop.hour && nowMinute <= t.stop.minute)) {
 					go incrementStats("TIMETABLE IN: "+timetable, 1)
-					//fmt.Println("confFromTimeTable: return IN", tt.cfgin)
+					if ZabovDebug {
+						log.Println("confFromTimeTable: return IN", tt.cfgin)
+					}
 					return tt.cfgin
 				}
 			}
 		}
 	}
 	go incrementStats("TIMETABLE OUT: "+timetable, 1)
-	//fmt.Println("confFromTimeTable: return OUT", tt.cfgout)
+	if ZabovDebug {
+		log.Println("confFromTimeTable: return OUT", tt.cfgout)
+	}
 	return tt.cfgout
 }
 
@@ -54,12 +61,16 @@ func confFromIP(clientIP net.IP) string {
 				if len(ipgroup.timetable) > 0 {
 					return confFromTimeTable(ipgroup.timetable)
 				}
-				//fmt.Println("confFromIP: ipgroup.cfg")
+				if ZabovDebug {
+					log.Println("confFromIP: ipgroup.cfg")
+				}
 				return ipgroup.cfg
 			}
 		}
 	}
-	//fmt.Println("confFromIP: return default")
+	if ZabovDebug {
+		log.Println("confFromIP: return default")
+	}
 	return "default"
 }
 func (mydns *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
@@ -77,12 +88,19 @@ func (mydns *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 
 	config := confFromIP(net.ParseIP(remIP))
 
+	if ZabovDebug {
+		log.Println("REQUEST:", remIP, config)
+	}
 	ZabovConfig := ZabovConfigs[config]
 	switch r.Question[0].Qtype {
 	case dns.TypeA:
 		msg.Authoritative = true
 		domain := msg.Question[0].Name
 		fqdn := strings.TrimRight(domain, ".")
+
+		if ZabovDebug {
+			log.Println("TypeA: fqdn:", fqdn)
+		}
 
 		if len(ZabovIPAliases[fqdn]) > 0 {
 			config = "__aliases__"
@@ -113,6 +131,17 @@ func (mydns *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 			ret := ForwardQuery(r, config, false)
 			w.WriteMsg(ret)
 		}
+	case dns.TypePTR:
+		if ZabovDebug {
+			log.Println("TypePTR: Name:", msg.Question[0].Name)
+		}
+
+		if len(ZabovLocalResponder) > 0 {
+			// if set use local responder for reverse lookup (suffix ".in-addr.arpa.")
+			config = "__localresponder__"
+		}
+		ret := ForwardQuery(r, config, true)
+		w.WriteMsg(ret)
 	default:
 		ret := ForwardQuery(r, config, false)
 		w.WriteMsg(ret)

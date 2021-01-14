@@ -16,11 +16,14 @@ var ZabovCacheTTL int
 //ZabovKillTTL is the amount of hours we cache the killfile (global)
 var ZabovKillTTL int
 
-//ZabovLocalResponder is the default DNS server for loca domains
+//ZabovLocalResponder is the default DNS server for local domains (global)
 var ZabovLocalResponder string
 
-//ZabovLocalDomain is the default local domain
+//ZabovLocalDomain is the default local domain (global)
 var ZabovLocalDomain string
+
+//ZabovDebug activate more logging if set to true (global)
+var ZabovDebug bool
 
 type handler struct{}
 

@@ -53,7 +53,8 @@ Minimal config file should look like:
         "proto":"udp", 
         "ipaddr":"0.0.0.0",
         "cachettl": 1,
-        "killfilettl": 12
+        "killfilettl": 12,
+        "debug:"false"
     },
     "configs":{
         "default":{
@@ -74,6 +75,7 @@ Global zabov settings:
 - ipaddr is the port to listen to. Maybe empty, (which will result in listening to 0.0.0.0) to avoid issues with docker.
 - cachettl: amount of time the cache is kept (in hours)
 - killfilettl: refresh time for _killfiles_
+- debug: if set to "true" Zabov prints verbose logs, such as config selection and single DNS requests
 
 configs:
 - contains multiple zabov configuration dictionaries. "default" configuration name is mandatory
@@ -84,7 +86,7 @@ configs:
 - hostsfile: path where you keep your local blacklistfile : this is in the format "singlefilter", meaning one domain per line, unlike hosts file.
 
 
-Advanced configuration includes support for multiple configuration based on IP Soruce and timetables:
+Advanced configuration includes support for multiple configurations based on IP Source and timetables:
 <pre>
 {
     "zabov":{

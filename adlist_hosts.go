@@ -95,7 +95,7 @@ func getDoubleFilters(urls urlsMap) {
 
 func downloadDoubleThread() {
 	fmt.Println("Starting updater of DOUBLE lists, each (hours):", ZabovKillTTL)
-
+	time.Sleep(2 * time.Second) // wait for local DNS server up & running (may be our DNS)
 	_urls := urlsMap{}
 
 	for {

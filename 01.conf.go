@@ -43,8 +43,11 @@ func init() {
 	ZabovPort := zabov["port"].(string)
 	ZabovType := zabov["proto"].(string)
 	ZabovAddr := zabov["ipaddr"].(string)
+	DebugStr := (zabov["debug"].(string))
 	ZabovCacheTTL = int(zabov["cachettl"].(float64))
 	ZabovKillTTL = int(zabov["killfilettl"].(float64))
+
+	ZabovDebug = DebugStr == "true"
 
 	if MyConf["configs"] == nil {
 		log.Println("configs not set: you shall set at least 'default' config")
