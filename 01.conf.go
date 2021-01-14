@@ -69,7 +69,7 @@ func init() {
 	MyDNS.Addr = zabovString
 	MyDNS.Net = ZabovType
 
-	ZabovConfigs = map[string]ZabovConfig{}
+	ZabovConfigs = map[string]*ZabovConfig{}
 	ZabovIPGroups = []ZabovIPGroup{}
 	ZabovTimetables = map[string]*ZabovTimetable{}
 	ZabovIPAliases = map[string]string{}
@@ -92,9 +92,11 @@ func init() {
 		conf.ZabovHostsFile = confRaw["hostsfile"].(string)
 
 		conf.ZabovDNSArray = fileByLines(conf.ZabovUpDNS)
-		ZabovConfigs[name] = conf
+		ZabovConfigs[name] = &conf
 		ZabovCreateKDB(name)
 	}
+
+	ZabovConfigs["default"].references++
 
 	timetables := MyConf["timetables"].(map[string]interface{})
 
@@ -113,17 +115,19 @@ func init() {
 			timetable.cfgout = "default"
 		}
 
-		_, ok := ZabovConfigs[timetable.cfgin]
+		refConfig, ok := ZabovConfigs[timetable.cfgin]
 		if !ok {
 			log.Println("timetable: inexistent cfgin:", timetable.cfgin)
 			os.Exit(1)
 		}
 
-		_, ok = ZabovConfigs[timetable.cfgout]
+		refConfig.references++
+		refConfig, ok = ZabovConfigs[timetable.cfgout]
 		if !ok {
 			log.Println("timetable: inexistent cfgout:", timetable.cfgout)
 			os.Exit(1)
 		}
+		refConfig.references++
 
 		tables := timetableRaw["tables"].([]interface{})
 
@@ -185,6 +189,15 @@ func init() {
 		}
 		groupStruct.cfg = groupMap["cfg"].(string)
 		groupStruct.timetable = groupMap["timetable"].(string)
+		if len(groupStruct.cfg) > 0 {
+			refConfig, ok := ZabovConfigs[groupStruct.cfg]
+			if !ok {
+				log.Println("ipgroups: inexistent cfg:", groupStruct.cfg)
+				os.Exit(1)
+			} else {
+				refConfig.references++
+			}
+		}
 		fmt.Println("cfg:", groupStruct.cfg)
 		fmt.Println("timetable:", groupStruct.timetable)
 		_, ok := ZabovTimetables[groupStruct.timetable]
@@ -201,14 +214,20 @@ func init() {
 		if localresponder["responder"] != nil {
 			ZabovLocalResponder = localresponder["responder"].(string)
 			if len(ZabovLocalResponder) > 0 {
-				local := ZabovConfig{}
-				local.ZabovDNSArray = []string{ZabovLocalResponder}
-				ZabovConfigs["__localresponder__"] = local
+				local := ZabovConfig{ZabovDNSArray: []string{ZabovLocalResponder}, references: 1}
+				ZabovConfigs["__localresponder__"] = &local
 				fmt.Println("ZabovLocalResponder:", ZabovLocalResponder)
 			}
 		}
 		if localresponder["localdomain"] != nil {
 			ZabovLocalDomain = localresponder["localdomain"].(string)
+		}
+	}
+
+	for name, conf := range ZabovConfigs {
+		if conf.references == 0 {
+			log.Println("WARNING: disabling unused configuration:", name)
+			delete(ZabovConfigs, name)
 		}
 	}
 	//fmt.Println("ZabovConfigs:", ZabovConfigs)

@@ -32,10 +32,11 @@ type ZabovConfig struct {
 	ZabovHostsFile string   // json:hostsfile -> ZabovHostsFile is the file we use to keep our hosts
 	ZabovUpDNS     string   // json:upstream -> ZabovUpDNS keeps the name of upstream DNSs
 	ZabovDNSArray  []string // contains all the DNS we mention, parsed from ZabovUpDNS file
+	references     int      // contains references to this config; if zero, config shall be removed
 }
 
 // ZabovConfigs contains all Zabov configs
-var ZabovConfigs map[string]ZabovConfig
+var ZabovConfigs map[string]*ZabovConfig
 
 // ZabovIPGroup contains Zabov groups of IPs
 type ZabovIPGroup struct {
