@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net"
 	"strings"
 	"time"
@@ -22,7 +21,7 @@ func getCurTime() (time.Time, error) {
 func confFromTimeTable(timetable string) string {
 	tt := ZabovTimetables[timetable]
 	if tt == nil {
-		fmt.Println("confFromTimeTable: return default")
+		//fmt.Println("confFromTimeTable: return default")
 		return "default"
 	}
 	for _, ttentry := range tt.table {
@@ -36,14 +35,14 @@ func confFromTimeTable(timetable string) string {
 				if (nowHour > t.start.hour || (nowHour == t.start.hour && nowMinute >= t.start.minute)) &&
 					(nowHour < t.stop.hour || (nowHour == t.stop.hour && nowMinute <= t.stop.minute)) {
 					go incrementStats("TIMETABLE IN: "+timetable, 1)
-					fmt.Println("confFromTimeTable: return IN", tt.cfgin)
+					//fmt.Println("confFromTimeTable: return IN", tt.cfgin)
 					return tt.cfgin
 				}
 			}
 		}
 	}
 	go incrementStats("TIMETABLE OUT: "+timetable, 1)
-	fmt.Println("confFromTimeTable: return OUT", tt.cfgout)
+	//fmt.Println("confFromTimeTable: return OUT", tt.cfgout)
 	return tt.cfgout
 }
 
@@ -55,12 +54,12 @@ func confFromIP(clientIP net.IP) string {
 				if len(ipgroup.timetable) > 0 {
 					return confFromTimeTable(ipgroup.timetable)
 				}
-				fmt.Println("confFromIP: ipgroup.cfg")
+				//fmt.Println("confFromIP: ipgroup.cfg")
 				return ipgroup.cfg
 			}
 		}
 	}
-	fmt.Println("confFromIP: return default")
+	//fmt.Println("confFromIP: return default")
 	return "default"
 }
 func (mydns *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
