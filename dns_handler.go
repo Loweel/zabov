@@ -105,6 +105,8 @@ func init() {
 		dns.TypeTA:         "TypeTA",
 		dns.TypeDLV:        "TypeDLV",
 		dns.TypeReserved:   "TypeReserved"}
+
+	fmt.Println("Local Time:", getLocalTime().Format(time.ANSIC))
 }
 
 func logQuery(clientIP string, name string, reqType uint16, config string, timetable string, killed string) {
@@ -136,8 +138,8 @@ func logQuery(clientIP string, name string, reqType uint16, config string, timet
 	}
 }
 
-func getCurTime() (time.Time, error) {
-	return time.Parse("15:04", time.Now().Format("15:04"))
+func getLocalTime() time.Time {
+	return time.Now().Local()
 }
 
 func confFromTimeTable(timetable string) string {
@@ -149,7 +151,8 @@ func confFromTimeTable(timetable string) string {
 		return "default"
 	}
 	for _, ttentry := range tt.table {
-		now := time.Now()
+		now := getLocalTime()
+
 		nowHour := now.Hour()
 		nowMinute := now.Minute()
 		weekday := weekdays[now.Weekday()]

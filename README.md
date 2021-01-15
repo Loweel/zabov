@@ -176,6 +176,8 @@ ipgroups: an array of ipgroup dictionaries
 # DOCKER
 Multistage Dockerfiles are provided for AMD64, ARMv7, ARM64V8
 
+NOTE: you shall use TZ env var to change docker image timezone. TZ defaults to CET.
+
 # TODO:
 
 - ~~caching~~
