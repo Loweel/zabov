@@ -25,6 +25,9 @@ var ZabovLocalDomain string
 //ZabovDebug activate more logging if set to true (global)
 var ZabovDebug bool
 
+//ZabovDebugDBPath path to store debug query logs: activate logging of each single query in a csv like file (global)
+var ZabovDebugDBPath string
+
 type handler struct{}
 
 // ZabovConfig contains all Zabov configs
