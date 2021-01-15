@@ -107,6 +107,9 @@ func downloadDoubleThread() {
 			}
 			s := fileByLines(ZabovDoubleBL)
 			for _, v := range s {
+				if len(v) == 0 || strings.TrimSpace(v)[0] == '#' {
+					continue
+				}
 				configs := _urls[v]
 				if configs == nil {
 					configs = stringarray{}

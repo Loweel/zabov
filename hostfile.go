@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 )
 
 func init() {
@@ -41,6 +42,9 @@ func ingestLocalBlacklists() {
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
 			d := scanner.Text()
+			if len(d) == 0 || strings.TrimSpace(d)[0] == '#' {
+				continue
+			}
 			DomainKill(d, ZabovHostsFile, configs)
 			incrementStats("Blacklist", 1)
 
