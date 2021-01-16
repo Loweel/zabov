@@ -22,6 +22,9 @@ var ZabovLocalResponder string
 //ZabovLocalDomain is the default local domain (global)
 var ZabovLocalDomain string
 
+//ZabovDefaultTimetable is the default timetable, applied to any client that is not already in any IP Group (global)
+var ZabovDefaultTimetable string
+
 //ZabovDebug activate more logging if set to true (global)
 var ZabovDebug bool
 

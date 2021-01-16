@@ -178,7 +178,6 @@ func confFromTimeTable(timetable string) string {
 }
 
 func confFromIP(clientIP net.IP) (string, string) {
-
 	for _, ipgroup := range ZabovIPGroups {
 		for _, ip := range ipgroup.ips {
 			if clientIP.Equal(ip) {
@@ -186,12 +185,16 @@ func confFromIP(clientIP net.IP) (string, string) {
 					return confFromTimeTable(ipgroup.timetable), ipgroup.timetable
 				}
 				if ZabovDebug {
-					log.Println("confFromIP: ipgroup.cfg")
+					log.Println("confFromIP: ipgroup.cfg", ipgroup.cfg)
 				}
 				return ipgroup.cfg, ""
 			}
 		}
 	}
+	if len(ZabovDefaultTimetable) > 0 {
+		return confFromTimeTable(ZabovDefaultTimetable), ZabovDefaultTimetable
+	}
+
 	if ZabovDebug {
 		log.Println("confFromIP: return default")
 	}

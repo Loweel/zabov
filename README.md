@@ -94,7 +94,9 @@ Advanced configuration includes support for multiple configurations based on IP 
         "proto":"udp", 
         "ipaddr":"0.0.0.0",
         "cachettl": 1,
-        "killfilettl": 12
+        "killfilettl": 12,
+        "debug":"false",
+        "timetable":"tt_default"
     },
     "localresponder":{
         "responder":"192.168.178.1:53",
@@ -115,6 +117,11 @@ Advanced configuration includes support for multiple configurations based on IP 
         "tt_children":{
             "tables":[{"times":"00:00-05:00;8:30-12:30;18:30-22:59", "days":"Mo;Tu;We;Th;Fr;Sa;Su"}],
             "cfgin":"children_restricted",
+            "cfgout":"default"
+        }
+        "tt_default":{
+            "tables":[{"times":"8:30-22:30", "days":"Su"}],
+            "cfgin":"children",
             "cfgout":"default"
         }
     },
@@ -143,6 +150,10 @@ Advanced configuration includes support for multiple configurations based on IP 
     }
 }
 </pre>
+
+Global zabov settings:
+
+- timetable: sets the global/default timetable. This table will be used for any client that is not already included in an IP group
 
 localresponder:
   - allows to set a local DNS to respond for "local" domains. A domain name is handled as "local" if dosen't contains "." (dots) or if it ends with a well known prefix, such as ".local".

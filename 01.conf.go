@@ -216,6 +216,15 @@ func init() {
 		ZabovIPGroups = append(ZabovIPGroups, groupStruct)
 	}
 
+	if zabov["timetable"] != nil {
+		ZabovDefaultTimetable = zabov["timetable"].(string)
+		_, ok := ZabovTimetables[ZabovDefaultTimetable]
+		if !ok {
+			log.Println("inexistent timetable:", ZabovDefaultTimetable)
+			os.Exit(1)
+		}
+	}
+
 	localresponder := MyConf["localresponder"].(map[string]interface{})
 
 	if localresponder != nil {
