@@ -7,9 +7,6 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
-//MyZabovKDB is the storage where we'll put domains to block (obsolete)
-//var MyZabovKDB *leveldb.DB
-
 //MyZabovCDB is the storage where we'll put domains to cache (global for all configs)
 var MyZabovCDB *leveldb.DB
 
@@ -23,13 +20,6 @@ func init() {
 	os.RemoveAll("./db")
 
 	os.MkdirAll("./db", 0755)
-	/*
-		MyZabovKDB, err = leveldb.OpenFile("./db/killfile", nil)
-		if err != nil {
-			fmt.Println("Cannot create Killfile db: ", err.Error())
-		} else {
-			fmt.Println("Killfile DB created")
-		}*/
 
 	MyZabovCDB, err = leveldb.OpenFile("./db/cache", nil)
 	if err != nil {

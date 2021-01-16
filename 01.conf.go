@@ -38,6 +38,9 @@ func init() {
 
 	MyConf := MyConfRaw.(map[string]interface{})
 
+	//******************************
+	// zabov section (global config)
+	//******************************
 	zabov := MyConf["zabov"].(map[string]interface{})
 
 	ZabovPort := zabov["port"].(string)
@@ -82,6 +85,9 @@ func init() {
 	ZabovTimetables = map[string]*ZabovTimetable{}
 	ZabovIPAliases = map[string]string{}
 
+	//*******************
+	// IP aliases section
+	//*******************
 	IPAliasesRaw := MyConf["ipaliases"].(map[string]interface{})
 
 	for alias, ip := range IPAliasesRaw {
@@ -89,6 +95,9 @@ func init() {
 		ZabovIPAliases[alias] = ip.(string)
 	}
 
+	//****************
+	// configs section
+	//****************
 	for name, v := range configs {
 		fmt.Println("evaluaing config name:", name)
 		confRaw := v.(map[string]interface{})
@@ -101,11 +110,15 @@ func init() {
 
 		conf.ZabovDNSArray = fileByLines(conf.ZabovUpDNS)
 		ZabovConfigs[name] = &conf
-		ZabovCreateKDB(name)
+
 	}
 
+	// default config is mandatory
 	ZabovConfigs["default"].references++
 
+	//*******************
+	// timetables section
+	//*******************
 	timetables := MyConf["timetables"].(map[string]interface{})
 
 	for name, v := range timetables {
@@ -174,6 +187,9 @@ func init() {
 		ZabovTimetables[name] = &timetable
 	}
 
+	//******************
+	// IP groups section
+	//******************
 	IPGroups := MyConf["ipgroups"].([]interface{})
 
 	fmt.Println("evaluating IP Groups: ", len(IPGroups))
@@ -225,6 +241,9 @@ func init() {
 		}
 	}
 
+	//************************
+	// Local responser section
+	//************************
 	localresponder := MyConf["localresponder"].(map[string]interface{})
 
 	if localresponder != nil {
@@ -241,15 +260,16 @@ func init() {
 		}
 	}
 
+	//******************************************
+	// clearing unused config to save resources
+	//******************************************
 	for name, conf := range ZabovConfigs {
 		if conf.references == 0 {
 			log.Println("WARNING: disabling unused configuration:", name)
 			delete(ZabovConfigs, name)
+		} else {
+			ZabovCreateKDB(name)
 		}
 	}
-	//fmt.Println("ZabovConfigs:", ZabovConfigs)
-	//fmt.Println("ZabovTimetables:", ZabovTimetables)
-	//fmt.Println("ZabovIPAliases:", ZabovIPAliases)
-	//fmt.Println("ZabovIPGroups:", ZabovIPGroups)
 
 }
