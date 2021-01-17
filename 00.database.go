@@ -40,7 +40,7 @@ func ZabovCreateKDB(conf string) {
 	if err != nil {
 		fmt.Println("Cannot create Killfile db: ", err.Error())
 	} else {
-		fmt.Println("Killfile DB created")
+		fmt.Println("Killfile DB created:", dbname)
 	}
 
 	MyZabovKDBs[conf] = KDB

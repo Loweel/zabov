@@ -16,7 +16,20 @@ var reqTypes map[uint16]string
 
 var weekdays []string
 
+type logItem struct {
+	clientIP  string
+	name      string
+	reqType   uint16
+	config    string
+	timetable string
+	killed    string
+}
+
+// logChannel used by logging thread
+var logChannel chan logItem
+
 func init() {
+
 	weekdays = []string{"Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"}
 
 	if len(ZabovDebugDBPath) > 0 {
@@ -107,13 +120,18 @@ func init() {
 		dns.TypeReserved:   "TypeReserved"}
 
 	fmt.Println("Local Time:", getLocalTime().Format(time.ANSIC))
+
+	if len(ZabovDebugDBPath) > 0 {
+		logChannel = make(chan logItem, 1024)
+		go logWriteThread()
+	}
 }
 
-func logQuery(clientIP string, name string, reqType uint16, config string, timetable string, killed string) {
-	if len(ZabovDebugDBPath) > 0 {
+func logWriteThread() {
+	for item := range logChannel {
 		var header string
 		d := time.Now().Format("2006-01-02")
-		logpath := path.Join(ZabovDebugDBPath, strings.Replace(clientIP, ":", "_", -1)+"-"+d+".log")
+		logpath := path.Join(ZabovDebugDBPath, strings.Replace(item.clientIP, ":", "_", -1)+"-"+d+".log")
 
 		_, err1 := os.Stat(logpath)
 		if os.IsNotExist(err1) {
@@ -121,12 +139,12 @@ func logQuery(clientIP string, name string, reqType uint16, config string, timet
 		}
 		f, err := os.OpenFile(logpath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err == nil {
-			reqTypeName, err := reqTypes[reqType]
+			reqTypeName, err := reqTypes[item.reqType]
 			if !err {
-				reqTypeName = fmt.Sprintf("%d", reqType)
+				reqTypeName = fmt.Sprintf("%d", item.reqType)
 			}
 			ct := time.Now().Format(time.RFC3339)
-			log := strings.Join([]string{ct, clientIP, strings.TrimRight(name, "."), reqTypeName, config, timetable, killed}, "\t")
+			log := strings.Join([]string{ct, item.clientIP, strings.TrimRight(item.name, "."), reqTypeName, item.config, item.timetable, item.killed}, "\t")
 			if len(header) > 0 {
 				f.Write([]byte(header))
 				f.Write([]byte("\n"))
@@ -135,6 +153,15 @@ func logQuery(clientIP string, name string, reqType uint16, config string, timet
 			f.Write([]byte("\n"))
 			f.Close()
 		}
+	}
+}
+
+func logQuery(clientIP string, name string, reqType uint16, config string, timetable string, killed string) {
+	if len(ZabovDebugDBPath) > 0 {
+		k := logItem{clientIP: clientIP, name: name, reqType: reqType, config: config, timetable: timetable, killed: killed}
+
+		logChannel <- k
+
 	}
 }
 
