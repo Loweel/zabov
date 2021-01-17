@@ -88,11 +88,13 @@ func init() {
 	//*******************
 	// IP aliases section
 	//*******************
-	IPAliasesRaw := MyConf["ipaliases"].(map[string]interface{})
+	if MyConf["ipaliases"] != nil {
+		IPAliasesRaw := MyConf["ipaliases"].(map[string]interface{})
 
-	for alias, ip := range IPAliasesRaw {
-		fmt.Println("IP Alias:", alias, ip)
-		ZabovIPAliases[alias] = ip.(string)
+		for alias, ip := range IPAliasesRaw {
+			fmt.Println("IP Alias:", alias, ip)
+			ZabovIPAliases[alias] = ip.(string)
+		}
 	}
 
 	//****************
@@ -119,117 +121,121 @@ func init() {
 	//*******************
 	// timetables section
 	//*******************
-	timetables := MyConf["timetables"].(map[string]interface{})
+	if MyConf["timetables"] != nil {
+		timetables := MyConf["timetables"].(map[string]interface{})
 
-	for name, v := range timetables {
-		fmt.Println("evaluaing timetable name:", name)
-		timetableRaw := v.(map[string]interface{})
-		var timetable ZabovTimetable
+		for name, v := range timetables {
+			fmt.Println("evaluaing timetable name:", name)
+			timetableRaw := v.(map[string]interface{})
+			var timetable ZabovTimetable
 
-		timetable.cfgin = timetableRaw["cfgin"].(string)
-		timetable.cfgout = timetableRaw["cfgout"].(string)
+			timetable.cfgin = timetableRaw["cfgin"].(string)
+			timetable.cfgout = timetableRaw["cfgout"].(string)
 
-		if timetable.cfgin == "" {
-			timetable.cfgin = "default"
-		}
-		if timetable.cfgout == "" {
-			timetable.cfgout = "default"
-		}
+			if timetable.cfgin == "" {
+				timetable.cfgin = "default"
+			}
+			if timetable.cfgout == "" {
+				timetable.cfgout = "default"
+			}
 
-		refConfig, ok := ZabovConfigs[timetable.cfgin]
-		if !ok {
-			log.Println("timetable: inexistent cfgin:", timetable.cfgin)
-			os.Exit(1)
-		}
+			refConfig, ok := ZabovConfigs[timetable.cfgin]
+			if !ok {
+				log.Println("timetable: inexistent cfgin:", timetable.cfgin)
+				os.Exit(1)
+			}
 
-		refConfig.references++
-		refConfig, ok = ZabovConfigs[timetable.cfgout]
-		if !ok {
-			log.Println("timetable: inexistent cfgout:", timetable.cfgout)
-			os.Exit(1)
-		}
-		refConfig.references++
+			refConfig.references++
+			refConfig, ok = ZabovConfigs[timetable.cfgout]
+			if !ok {
+				log.Println("timetable: inexistent cfgout:", timetable.cfgout)
+				os.Exit(1)
+			}
+			refConfig.references++
 
-		tables := timetableRaw["tables"].([]interface{})
+			tables := timetableRaw["tables"].([]interface{})
 
-		for i := range tables {
-			table := tables[i].(map[string]interface{})
-			var ttEntry ZabovTimetableEntry
-			ttEntry.times = []*ZabovTimeRange{}
-			for _, tRaw := range strings.Split(table["times"].(string), ";") {
-				tRawArr := strings.Split(tRaw, "-")
-				if len(tRawArr) > 1 {
-					startArr := strings.Split(tRawArr[0], ":")
-					stopArr := strings.Split(tRawArr[1], ":")
+			for i := range tables {
+				table := tables[i].(map[string]interface{})
+				var ttEntry ZabovTimetableEntry
+				ttEntry.times = []*ZabovTimeRange{}
+				for _, tRaw := range strings.Split(table["times"].(string), ";") {
+					tRawArr := strings.Split(tRaw, "-")
+					if len(tRawArr) > 1 {
+						startArr := strings.Split(tRawArr[0], ":")
+						stopArr := strings.Split(tRawArr[1], ":")
 
-					if len(startArr) > 1 && len(stopArr) > 1 {
-						hourStart, _ := strconv.Atoi(startArr[0])
-						minuteStart, _ := strconv.Atoi(startArr[1])
-						start := ZabovTime{hour: hourStart, minute: minuteStart}
+						if len(startArr) > 1 && len(stopArr) > 1 {
+							hourStart, _ := strconv.Atoi(startArr[0])
+							minuteStart, _ := strconv.Atoi(startArr[1])
+							start := ZabovTime{hour: hourStart, minute: minuteStart}
 
-						hourStop, _ := strconv.Atoi(stopArr[0])
-						minuteStop, _ := strconv.Atoi(stopArr[1])
-						stop := ZabovTime{hour: hourStop, minute: minuteStop}
-						t := ZabovTimeRange{start: start, stop: stop}
-						ttEntry.times = append(ttEntry.times, &t)
+							hourStop, _ := strconv.Atoi(stopArr[0])
+							minuteStop, _ := strconv.Atoi(stopArr[1])
+							stop := ZabovTime{hour: hourStop, minute: minuteStop}
+							t := ZabovTimeRange{start: start, stop: stop}
+							ttEntry.times = append(ttEntry.times, &t)
+						}
 					}
+
 				}
 
-			}
+				ttEntry.days = map[string]bool{}
+				for _, day := range strings.Split(table["days"].(string), ";") {
+					ttEntry.days[day] = true
+				}
 
-			ttEntry.days = map[string]bool{}
-			for _, day := range strings.Split(table["days"].(string), ";") {
-				ttEntry.days[day] = true
+				timetable.table = append(timetable.table, &ttEntry)
 			}
-
-			timetable.table = append(timetable.table, &ttEntry)
+			ZabovTimetables[name] = &timetable
 		}
-		ZabovTimetables[name] = &timetable
 	}
 
 	//******************
 	// IP groups section
 	//******************
-	IPGroups := MyConf["ipgroups"].([]interface{})
+	if MyConf["ipgroups"] != nil {
+		IPGroups := MyConf["ipgroups"].([]interface{})
 
-	fmt.Println("evaluating IP Groups: ", len(IPGroups))
-	for i := range IPGroups {
-		fmt.Println("evaluating IP Group n.", i)
-		var groupStruct ZabovIPGroup
-		groupMap := IPGroups[i].(map[string]interface{})
-		IPsRaw := groupMap["ips"].([]interface{})
-		groupStruct.ips = []net.IP{}
-		for x := range IPsRaw {
-			ipRaw := IPsRaw[x].(string)
-			ip := net.ParseIP(ipRaw)
-			fmt.Println("adding IP ", ipRaw)
+		fmt.Println("evaluating IP Groups: ", len(IPGroups))
+		for i := range IPGroups {
+			fmt.Println("evaluating IP Group n.", i)
+			var groupStruct ZabovIPGroup
+			groupMap := IPGroups[i].(map[string]interface{})
+			IPsRaw := groupMap["ips"].([]interface{})
+			groupStruct.ips = []net.IP{}
+			for x := range IPsRaw {
+				ipRaw := IPsRaw[x].(string)
+				ip := net.ParseIP(ipRaw)
+				fmt.Println("adding IP ", ipRaw)
 
-			alias, ok := ZabovIPAliases[ipRaw]
-			if ok {
-				fmt.Println("IP alias: ", ipRaw, alias)
-				ip = net.ParseIP(alias)
+				alias, ok := ZabovIPAliases[ipRaw]
+				if ok {
+					fmt.Println("IP alias: ", ipRaw, alias)
+					ip = net.ParseIP(alias)
+				}
+				groupStruct.ips = append(groupStruct.ips, ip)
 			}
-			groupStruct.ips = append(groupStruct.ips, ip)
-		}
-		groupStruct.cfg = groupMap["cfg"].(string)
-		groupStruct.timetable = groupMap["timetable"].(string)
-		if len(groupStruct.cfg) > 0 {
-			refConfig, ok := ZabovConfigs[groupStruct.cfg]
+			groupStruct.cfg = groupMap["cfg"].(string)
+			groupStruct.timetable = groupMap["timetable"].(string)
+			if len(groupStruct.cfg) > 0 {
+				refConfig, ok := ZabovConfigs[groupStruct.cfg]
+				if !ok {
+					log.Println("ipgroups: inexistent cfg:", groupStruct.cfg)
+					os.Exit(1)
+				} else {
+					refConfig.references++
+				}
+			}
+			fmt.Println("cfg:", groupStruct.cfg)
+			fmt.Println("timetable:", groupStruct.timetable)
+			_, ok := ZabovTimetables[groupStruct.timetable]
 			if !ok {
-				log.Println("ipgroups: inexistent cfg:", groupStruct.cfg)
+				log.Println("inexistent timetable:", groupStruct.timetable)
 				os.Exit(1)
-			} else {
-				refConfig.references++
 			}
+			ZabovIPGroups = append(ZabovIPGroups, groupStruct)
 		}
-		fmt.Println("cfg:", groupStruct.cfg)
-		fmt.Println("timetable:", groupStruct.timetable)
-		_, ok := ZabovTimetables[groupStruct.timetable]
-		if !ok {
-			log.Println("inexistent timetable:", groupStruct.timetable)
-			os.Exit(1)
-		}
-		ZabovIPGroups = append(ZabovIPGroups, groupStruct)
 	}
 
 	if zabov["timetable"] != nil {
@@ -244,24 +250,25 @@ func init() {
 	//************************
 	// Local responser section
 	//************************
-	localresponder := MyConf["localresponder"].(map[string]interface{})
+	if MyConf["localresponder"] != nil {
+		localresponder := MyConf["localresponder"].(map[string]interface{})
 
-	if localresponder != nil {
-		if localresponder["responder"] != nil {
-			ZabovLocalResponder = localresponder["responder"].(string)
-			if len(ZabovLocalResponder) > 0 {
-				local := ZabovConfig{ZabovDNSArray: []string{ZabovLocalResponder}, references: 1}
-				ZabovConfigs["__localresponder__"] = &local
-				fmt.Println("ZabovLocalResponder:", ZabovLocalResponder)
+		if localresponder != nil {
+			if localresponder["responder"] != nil {
+				ZabovLocalResponder = localresponder["responder"].(string)
+				if len(ZabovLocalResponder) > 0 {
+					local := ZabovConfig{ZabovDNSArray: []string{ZabovLocalResponder}, references: 1}
+					ZabovConfigs["__localresponder__"] = &local
+					fmt.Println("ZabovLocalResponder:", ZabovLocalResponder)
+				}
+			}
+			if localresponder["localdomain"] != nil {
+				ZabovLocalDomain = localresponder["localdomain"].(string)
 			}
 		}
-		if localresponder["localdomain"] != nil {
-			ZabovLocalDomain = localresponder["localdomain"].(string)
-		}
 	}
-
 	//******************************************
-	// clearing unused config to save resources
+	// clearing unused configs to save resources
 	//******************************************
 	for name, conf := range ZabovConfigs {
 		if conf.references == 0 {
