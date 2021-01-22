@@ -16,9 +16,12 @@ func init() {
 }
 
 //DoubleIndexFilter puts the domains inside file
-func DoubleIndexFilter(durl string) error {
+func DoubleIndexFilter(durl string, configs stringarray) error {
 
-	fmt.Println("Retrieving HostFile from: ", durl)
+	fmt.Println("DoubleIndexFilter: Retrieving HostFile from: ", durl)
+
+	// resets malformed HostLines for url
+	setstatsvalue("Malformed HostLines "+durl, 0)
 
 	var err error
 
@@ -48,6 +51,9 @@ func DoubleIndexFilter(durl string) error {
 
 		line := scanner.Text()
 
+		if len(line) == 0 || strings.TrimSpace(line)[0] == '#' {
+			continue
+		}
 		h := strings.FieldsFunc(line, splitter)
 
 		if h == nil {
@@ -59,7 +65,8 @@ func DoubleIndexFilter(durl string) error {
 		}
 
 		if net.ParseIP(h[0]) != nil {
-			DomainKill(h[1], durl)
+
+			DomainKill(h[1], durl, configs)
 
 			// fmt.Println("MATCH: ", h[1])
 			numLines++
@@ -76,20 +83,44 @@ func DoubleIndexFilter(durl string) error {
 
 }
 
-func getDoubleFilters() {
+func getDoubleFilters(urls urlsMap) {
 
-	s := fileByLines(ZabovDoubleBL)
-
-	for _, a := range s {
-		DoubleIndexFilter(a)
+	fmt.Println("getDoubleFilters: downloading all urls:", len(urls))
+	for url, configs := range urls {
+		DoubleIndexFilter(url, configs)
 	}
+	fmt.Println("getDoubleFilters: DONE!")
 
 }
 
 func downloadDoubleThread() {
 	fmt.Println("Starting updater of DOUBLE lists, each (hours):", ZabovKillTTL)
+	time.Sleep(2 * time.Second) // wait for local DNS server up & running (may be our DNS)
+	_urls := urlsMap{}
+
 	for {
-		getDoubleFilters()
+		fmt.Println("downloadDoubleThread: collecting urls from all configs...")
+		for config := range ZabovConfigs {
+			ZabovDoubleBL := ZabovConfigs[config].ZabovDoubleBL
+			if len(ZabovDoubleBL) == 0 {
+				continue
+			}
+			s := fileByLines(ZabovDoubleBL)
+			for _, v := range s {
+				if len(v) == 0 || strings.TrimSpace(v)[0] == '#' {
+					continue
+				}
+				configs := _urls[v]
+				if configs == nil {
+					configs = stringarray{}
+					_urls[v] = configs
+				}
+				configs = append(configs, config)
+				_urls[v] = configs
+			}
+		}
+
+		getDoubleFilters(_urls)
 		time.Sleep(time.Duration(ZabovKillTTL) * time.Hour)
 	}
 

@@ -81,7 +81,12 @@ func statsThread() {
 		case "INC":
 			ZabovStats[item.Payload] += item.Number
 		case "SET":
-			ZabovStats[item.Payload] = item.Number
+			if item.Number == 0 {
+
+				delete(ZabovStats, item.Payload)
+			} else {
+				ZabovStats[item.Payload] = item.Number
+			}
 		case "PRI":
 			statsPrint()
 		}

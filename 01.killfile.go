@@ -5,11 +5,10 @@ import (
 	"strings"
 )
 
-var zabovKbucket = []byte("killfile")
-
 type killfileItem struct {
-	Kdomain string
-	Ksource string
+	Kdomain  string
+	Ksource  string
+	Kconfigs stringarray
 }
 
 var bChannel chan killfileItem
@@ -27,16 +26,25 @@ func bWriteThread() {
 
 	for item := range bChannel {
 
-		writeInKillfile(item.Kdomain, item.Ksource)
-		incrementStats("BL domains from "+item.Ksource, 1)
-		incrementStats("TOTAL", 1)
+		alreadyInSomeDB := false
+
+		for _, config := range item.Kconfigs {
+			if !alreadyInSomeDB {
+				alreadyInSomeDB = domainInKillfile(item.Kdomain, config)
+			}
+			writeInKillfile(item.Kdomain, item.Ksource, config)
+		}
+		if !alreadyInSomeDB {
+			incrementStats("BL domains from "+item.Ksource, 1)
+			incrementStats("TOTAL", 1)
+		}
 
 	}
 
 }
 
 //DomainKill stores a domain name inside the killfile
-func DomainKill(s, durl string) {
+func DomainKill(s, durl string, configs stringarray) {
 
 	if len(s) > 2 {
 
@@ -46,6 +54,7 @@ func DomainKill(s, durl string) {
 
 		k.Kdomain = s
 		k.Ksource = durl
+		k.Kconfigs = configs
 
 		bChannel <- k
 
@@ -53,11 +62,12 @@ func DomainKill(s, durl string) {
 
 }
 
-func writeInKillfile(key, value string) {
+func writeInKillfile(key, value string, config string) {
 
 	stK := []byte(key)
 	stV := []byte(value)
 
+	MyZabovKDB := MyZabovKDBs[config]
 	err := MyZabovKDB.Put(stK, stV, nil)
 	if err != nil {
 		fmt.Println("Cannot write to Killfile DB: ", err.Error())
@@ -65,10 +75,11 @@ func writeInKillfile(key, value string) {
 
 }
 
-func domainInKillfile(domain string) bool {
+func domainInKillfile(domain string, config string) bool {
 
 	s := strings.ToLower(domain)
 
+	MyZabovKDB := MyZabovKDBs[config]
 	has, err := MyZabovKDB.Has([]byte(s), nil)
 	if err != nil {
 		fmt.Println("Cannot read from Killfile DB: ", err.Error())

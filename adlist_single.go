@@ -14,9 +14,12 @@ func init() {
 }
 
 //SingleIndexFilter puts the domains inside file
-func SingleIndexFilter(durl string) error {
+func SingleIndexFilter(durl string, configs stringarray) error {
 
 	fmt.Println("Retrieving DomainFile from: ", durl)
+
+	// resets malformed HostLines for url
+	setstatsvalue("Malformed DomainLines "+durl, 0)
 
 	var err error
 
@@ -46,6 +49,9 @@ func SingleIndexFilter(durl string) error {
 
 		line := scanner.Text()
 
+		if len(line) == 0 || strings.TrimSpace(line)[0] == '#' {
+			continue
+		}
 		h := strings.FieldsFunc(line, splitter)
 
 		if h == nil {
@@ -57,7 +63,9 @@ func SingleIndexFilter(durl string) error {
 		}
 
 		if !strings.Contains(h[0], "#") {
-			DomainKill(h[0], durl)
+
+			DomainKill(h[0], durl, configs)
+
 			// fmt.Println("MATCH: ", h[1])
 			numLines++
 		} else {
@@ -73,20 +81,47 @@ func SingleIndexFilter(durl string) error {
 
 }
 
-func getSingleFilters() {
+func getSingleFilters(urls urlsMap) {
 
-	s := fileByLines(ZabovSingleBL)
-
-	for _, a := range s {
-		SingleIndexFilter(a)
+	fmt.Println("getSingleFilters: downloading all urls:", len(urls))
+	for url, configs := range urls {
+		SingleIndexFilter(url, configs)
 	}
+	fmt.Println("getSingleFilters: DONE!")
 
 }
 
 func downloadThread() {
 	fmt.Println("Starting updater of SINGLE lists, each (hours): ", ZabovKillTTL)
+	time.Sleep(2 * time.Second) // wait for local DNS server up & running (may be our DNS)
+
+	_urls := urlsMap{}
+
 	for {
-		getSingleFilters()
+		fmt.Println("downloadThread: collecting urls from all configs...")
+		for config := range ZabovConfigs {
+			ZabovSingleBL := ZabovConfigs[config].ZabovSingleBL
+
+			if len(ZabovSingleBL) == 0 {
+				continue
+			}
+
+			s := fileByLines(ZabovSingleBL)
+			for _, v := range s {
+				if len(v) == 0 || strings.TrimSpace(v)[0] == '#' {
+					continue
+				}
+				configs := _urls[v]
+				if configs == nil {
+					configs = stringarray{}
+					_urls[v] = configs
+				}
+				configs = append(configs, config)
+				_urls[v] = configs
+			}
+		}
+
+		getSingleFilters(_urls)
 		time.Sleep(time.Duration(ZabovKillTTL) * time.Hour)
 	}
 

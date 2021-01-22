@@ -12,7 +12,8 @@ import (
 
 //ForwardQuery forwards the query to the upstream server
 //first server to answer wins
-func ForwardQuery(query *dns.Msg) *dns.Msg {
+//accepts config name to select the UP DNS source list
+func ForwardQuery(query *dns.Msg, config string, nocache bool) *dns.Msg {
 
 	go incrementStats("ForwardQueries", 1)
 
@@ -23,12 +24,14 @@ func ForwardQuery(query *dns.Msg) *dns.Msg {
 	fqdn := strings.TrimRight(query.Question[0].Name, ".")
 
 	lfqdn := fmt.Sprintf("%d", query.Question[0].Qtype) + "." + fqdn
-	if cached := GetDomainFromCache(lfqdn); cached != nil {
-		go incrementStats("CacheHit", 1)
-		cached.SetReply(query)
-		cached.Authoritative = true
-		return cached
+	if !nocache {
+		if cached := GetDomainFromCache(lfqdn); cached != nil {
+			go incrementStats("CacheHit", 1)
+			cached.SetReply(query)
+			cached.Authoritative = true
+			return cached
 
+		}
 	}
 
 	c := new(dns.Client)
@@ -45,7 +48,7 @@ func ForwardQuery(query *dns.Msg) *dns.Msg {
 			continue
 		}
 
-		d := oneTimeDNS()
+		d := oneTimeDNS(config)
 
 		in, _, err := c.Exchange(query, d)
 		if err != nil {
@@ -78,13 +81,18 @@ func init() {
 
 }
 
-func oneTimeDNS() (dns string) {
+func oneTimeDNS(config string) (dns string) {
 
 	rand.Seed(time.Now().Unix())
 
-	upl := ZabovDNSArray
+	upl := ZabovConfigs[config].ZabovDNSArray
 
 	if len(upl) < 1 {
+
+		if len(ZabovLocalResponder) > 0 {
+			fmt.Println("No DNS defined, fallback to local responder:", ZabovLocalResponder)
+			return ZabovLocalResponder
+		}
 		fmt.Println("No DNS defined, using default 127.0.0.53:53. Hope it works!")
 		return "127.0.0.53:53"
 	}

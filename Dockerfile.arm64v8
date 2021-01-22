@@ -1,4 +1,4 @@
-FROM arm64v8/golang:1.14.1 AS builder
+FROM arm64v8/golang:1.15.6 AS builder
 RUN apt install git -y
 RUN mkdir -p /go/src/zabov
 RUN git clone https://git.keinpfusch.net/loweel/zabov /go/src/zabov 
@@ -10,8 +10,10 @@ FROM arm64v8/debian:latest
 RUN apt update
 RUN apt upgrade -y
 RUN apt install ca-certificates -y
+RUN apt install tzdata -y
 RUN mkdir -p /opt/zabov
 WORKDIR  /opt/zabov
 COPY --from=builder /go/src/zabov /opt/zabov 
 EXPOSE 53/udp
+ENV TZ Europe/Rome
 ENTRYPOINT ["/opt/zabov/zabov"]
