@@ -13,10 +13,13 @@ import (
 	"github.com/miekg/dns"
 )
 
+var localresponderConfigName string
+
 type stringarray []string
 type urlsMap map[string]stringarray
 
 func init() {
+	localresponderConfigName = "__localresponder__"
 	var MyConfRaw interface{}
 
 	file, err := ioutil.ReadFile("config.json")
@@ -248,7 +251,7 @@ func init() {
 	}
 
 	//************************
-	// Local responser section
+	// Local responder section
 	//************************
 	if MyConf["localresponder"] != nil {
 		localresponder := MyConf["localresponder"].(map[string]interface{})
@@ -258,7 +261,7 @@ func init() {
 				ZabovLocalResponder = localresponder["responder"].(string)
 				if len(ZabovLocalResponder) > 0 {
 					local := ZabovConfig{ZabovDNSArray: []string{ZabovLocalResponder}, references: 1}
-					ZabovConfigs["__localresponder__"] = &local
+					ZabovConfigs[localresponderConfigName] = &local
 					fmt.Println("ZabovLocalResponder:", ZabovLocalResponder)
 				}
 			}

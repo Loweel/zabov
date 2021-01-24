@@ -42,7 +42,8 @@ func ForwardQuery(query *dns.Msg, config string, nocache bool) *dns.Msg {
 	for {
 		// round robin with retry
 
-		if !NetworkUp {
+		// local responder should always be available also if no internet connection
+		if !NetworkUp && localresponderConfigName != config {
 			time.Sleep(10 * time.Second)
 			go incrementStats("Network Problems ", 1)
 			continue

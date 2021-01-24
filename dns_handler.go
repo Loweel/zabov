@@ -269,7 +269,7 @@ func (mydns *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 		if len(ZabovLocalResponder) > 0 {
 			if !strings.Contains(fqdn, ".") ||
 				(len(ZabovLocalDomain) > 0 && strings.HasSuffix(fqdn, ZabovLocalDomain)) {
-				config = "__localresponder__"
+				config = localresponderConfigName
 				ret := ForwardQuery(r, config, true)
 				w.WriteMsg(ret)
 				go logQuery(remIP, fqdn, QType, config, timetable, "localresponder")
@@ -297,7 +297,7 @@ func (mydns *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 
 		if len(ZabovLocalResponder) > 0 {
 			// if set use local responder for reverse lookup (suffix ".in-addr.arpa.")
-			config = "__localresponder__"
+			config = localresponderConfigName
 		}
 		ret := ForwardQuery(r, config, true)
 		w.WriteMsg(ret)
