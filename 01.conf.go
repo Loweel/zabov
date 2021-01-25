@@ -110,7 +110,7 @@ func init() {
 		conf.ZabovUpDNS = confRaw["upstream"].(string)
 		conf.ZabovSingleBL = confRaw["singlefilters"].(string)
 		conf.ZabovDoubleBL = confRaw["doublefilters"].(string)
-		conf.ZabovAddBL = confRaw["blackholeip"].(string)
+		conf.ZabovAddBL = net.ParseIP(confRaw["blackholeip"].(string))
 		conf.ZabovHostsFile = confRaw["hostsfile"].(string)
 
 		conf.ZabovDNSArray = fileByLines(conf.ZabovUpDNS)

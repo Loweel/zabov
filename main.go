@@ -37,7 +37,7 @@ type handler struct{}
 type ZabovConfig struct {
 	ZabovSingleBL  string   // json:singlefilters -> ZabovSingleBL list of urls returning a file with just names of domains
 	ZabovDoubleBL  string   // json:doublefilters -> ZabovDoubleBL list of urls returning a file with  IP<space>domain
-	ZabovAddBL     string   // json:blackholeip  -> ZabovAddBL is the IP we want to send all the clients to. Usually is 127.0.0.1
+	ZabovAddBL     net.IP   // json:blackholeip  -> ZabovAddBL is the IP we want to send all the clients to. Usually is 127.0.0.1
 	ZabovHostsFile string   // json:hostsfile -> ZabovHostsFile is the file we use to keep our hosts
 	ZabovUpDNS     string   // json:upstream -> ZabovUpDNS keeps the name of upstream DNSs
 	ZabovDNSArray  []string // contains all the DNS we mention, parsed from ZabovUpDNS file

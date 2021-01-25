@@ -282,7 +282,7 @@ func (mydns *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 
 			msg.Answer = append(msg.Answer, &dns.A{
 				Hdr: dns.RR_Header{Name: domain, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 60},
-				A:   net.ParseIP(ZabovConfig.ZabovAddBL),
+				A:   ZabovConfig.ZabovAddBL,
 			})
 			go logQuery(remIP, fqdn, QType, config, timetable, "killed")
 		} else {
