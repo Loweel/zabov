@@ -30,7 +30,9 @@ func ForwardQuery(query *dns.Msg, config string, nocache bool) *dns.Msg {
 	if !nocache {
 		if cached := GetDomainFromCache(lfqdn); cached != nil {
 			go incrementStats("CacheHit", 1)
+			Rcode := cached.MsgHdr.Rcode
 			cached.SetReply(query)
+			cached.MsgHdr.Rcode = Rcode
 			cached.Authoritative = true
 			if ZabovDebug {
 				log.Println("ForwardQuery: CacheHit")
@@ -65,7 +67,9 @@ func ForwardQuery(query *dns.Msg, config string, nocache bool) *dns.Msg {
 			continue
 		} else {
 			go incrementStats(d, 1)
+			Rcode := in.MsgHdr.Rcode
 			in.SetReply(query)
+			in.MsgHdr.Rcode = Rcode
 			in.Authoritative = true
 			in.Compress = true
 			go DomainCache(lfqdn, in)
