@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"math/rand"
@@ -14,7 +15,9 @@ import (
 //first server to answer wins
 //accepts config name to select the UP DNS source list
 func ForwardQuery(query *dns.Msg, config string, nocache bool) *dns.Msg {
-
+	if ZabovDebug {
+		log.Println("ForwardQuery: nocache", nocache)
+	}
 	go incrementStats("ForwardQueries", 1)
 
 	r := new(dns.Msg)
@@ -29,6 +32,10 @@ func ForwardQuery(query *dns.Msg, config string, nocache bool) *dns.Msg {
 			go incrementStats("CacheHit", 1)
 			cached.SetReply(query)
 			cached.Authoritative = true
+			if ZabovDebug {
+				log.Println("ForwardQuery: CacheHit")
+			}
+			cached.Compress = true
 			return cached
 
 		}
@@ -60,7 +67,12 @@ func ForwardQuery(query *dns.Msg, config string, nocache bool) *dns.Msg {
 			go incrementStats(d, 1)
 			in.SetReply(query)
 			in.Authoritative = true
+			in.Compress = true
 			go DomainCache(lfqdn, in)
+			if ZabovDebug {
+				log.Println("ForwardQuery: OK!")
+			}
+
 			return in
 
 		}

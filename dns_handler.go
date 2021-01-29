@@ -287,7 +287,7 @@ func (mydns *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 			go logQuery(remIP, fqdn, QType, config, timetable, "killed")
 		} else {
 			go logQuery(remIP, fqdn, QType, config, timetable, "forwarded")
-			ret := ForwardQuery(r, config, false)
+			ret := ForwardQuery(r, config, !ZabovConfig.ZabovCache)
 			w.WriteMsg(ret)
 		}
 	case dns.TypePTR:
@@ -303,7 +303,7 @@ func (mydns *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 		w.WriteMsg(ret)
 		go logQuery(remIP, msg.Question[0].Name, QType, config, timetable, "localresponder")
 	default:
-		ret := ForwardQuery(r, config, false)
+		ret := ForwardQuery(r, config, !ZabovConfig.ZabovCache)
 		w.WriteMsg(ret)
 		if len(ZabovDebugDBPath) > 0 {
 			go logQuery(remIP, msg.Question[0].Name, QType, config, timetable, "forwarded")

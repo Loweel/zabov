@@ -113,6 +113,11 @@ func init() {
 		conf.ZabovAddBL = net.ParseIP(confRaw["blackholeip"].(string))
 		conf.ZabovHostsFile = confRaw["hostsfile"].(string)
 
+		if confRaw["cache"] != nil {
+			conf.ZabovCache = confRaw["cache"].(bool)
+		} else {
+			conf.ZabovCache = true
+		}
 		conf.ZabovDNSArray = fileByLines(conf.ZabovUpDNS)
 		ZabovConfigs[name] = &conf
 
@@ -219,8 +224,16 @@ func init() {
 				}
 				groupStruct.ips = append(groupStruct.ips, ip)
 			}
-			groupStruct.cfg = groupMap["cfg"].(string)
-			groupStruct.timetable = groupMap["timetable"].(string)
+			if groupMap["cfg"] != nil {
+				groupStruct.cfg = groupMap["cfg"].(string)
+			}
+			if groupMap["timetable"] != nil {
+				groupStruct.timetable = groupMap["timetable"].(string)
+			}
+			if len(groupStruct.cfg) == 0 && len(groupStruct.timetable) == 0 {
+				log.Println("ip group error: specify cfg or timetable")
+				os.Exit(1)
+			}
 			if len(groupStruct.cfg) > 0 {
 				refConfig, ok := ZabovConfigs[groupStruct.cfg]
 				if !ok {
@@ -229,14 +242,17 @@ func init() {
 				} else {
 					refConfig.references++
 				}
+				fmt.Println("cfg:", groupStruct.cfg)
 			}
-			fmt.Println("cfg:", groupStruct.cfg)
-			fmt.Println("timetable:", groupStruct.timetable)
-			_, ok := ZabovTimetables[groupStruct.timetable]
-			if !ok {
-				log.Println("inexistent timetable:", groupStruct.timetable)
-				os.Exit(1)
+			if len(groupStruct.timetable) > 0 {
+				fmt.Println("timetable:", groupStruct.timetable)
+				_, ok := ZabovTimetables[groupStruct.timetable]
+				if !ok {
+					log.Println("inexistent timetable:", groupStruct.timetable)
+					os.Exit(1)
+				}
 			}
+
 			ZabovIPGroups = append(ZabovIPGroups, groupStruct)
 		}
 	}

@@ -62,7 +62,8 @@ Minimal config file should look like:
             "singlefilters":"./urls-domains.txt",
             "doublefilters":"./urls-hosts.txt", 
             "blackholeip":"127.0.0.1",
-            "hostsfile":"./urls-local.txt"
+            "hostsfile":"./urls-local.txt",
+            "cache":true
         },
     }
 }
@@ -84,7 +85,7 @@ configs:
 - doublefilters: name of the file, for blacklists following the "doublefilter" schema.(one URL per line)
 - blackholeip: IP address to return when the IP is banned. This is because you may want to avoid MX issues, mail loops on localhost, or you have a web server running on localhost
 - hostsfile: path where you keep your local blacklistfile : this is in the format "singlefilter", meaning one domain per line, unlike hosts file.
-
+- cache: if set to false disable the cache for this configuration. Boolean, defaults true
 
 Advanced configuration includes support for multiple configurations based on IP Source and timetables:
 <pre>
@@ -104,6 +105,7 @@ Advanced configuration includes support for multiple configurations based on IP 
     },
     "ipaliases":{
         "pc8":"192.168.178.29",
+        "lg-tv":"192.168.178.10",
         "localhost":"127.0.0.1"
     },
     "ipgroups":[
@@ -111,6 +113,11 @@ Advanced configuration includes support for multiple configurations based on IP 
             "ips":["localhost", "::1", "192.168.178.30", "192.168.178.31", "pc8"],
             "cfg":"",
             "timetable":"tt_children"
+        },
+        {
+            "ips":["lg-tv"],
+            "cfg":"tv",
+            "timetable":""
         }
     ],
     "timetables":{
@@ -146,6 +153,14 @@ Advanced configuration includes support for multiple configurations based on IP 
             "doublefilters":"./urls-hosts-restricted.txt", 
             "blackholeip":"127.0.0.1",
             "hostsfile":"./urls-local.txt"
+        },
+        "tv":{
+            "upstream":"./dns-upstream.txt",
+            "singlefilters":"",
+            "doublefilters":"", 
+            "blackholeip":"127.0.0.1",
+            "hostsfile":"",
+            "cache":false
         }
     }
 }
